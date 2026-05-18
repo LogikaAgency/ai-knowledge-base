@@ -155,7 +155,7 @@ def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
     print(f"\nChiamando Claude ({claude_path})...")
 
     result = subprocess.run(
-        [claude_path, "-p", prompt],
+        [claude_path, "-p", prompt, "--dangerously-skip-permissions"],
         capture_output=True,
         text=True,
         timeout=300,
