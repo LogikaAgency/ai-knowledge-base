@@ -39,7 +39,7 @@ Il tuo PC fa tutto da solo. Tu apri Obsidian e leggi.
 ### 1. Clona il repo
 
 ```bash
-git clone https://github.com/tuousername/ai-knowledge-base.git
+git clone https://github.com/LogikaAgency/ai-knowledge-base.git
 cd ai-knowledge-base
 ```
 
