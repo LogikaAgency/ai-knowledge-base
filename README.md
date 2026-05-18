@@ -166,4 +166,4 @@ Vai sulla pagina del canale → tasto destro → Visualizza sorgente pagina → 
 
 ---
 
-Fatto da [Logika](https://youtube.com/@logika) — canale YouTube italiano sull'AI.
+Fatto da [Logika](https://www.logika.agency)
