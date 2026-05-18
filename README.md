@@ -49,13 +49,7 @@ cd ai-knowledge-base
 pip install feedparser pyyaml python-dateutil
 ```
 
-### 3. Configura Obsidian
-
-1. Apri Obsidian → Impostazioni → Plugin Community
-2. Cerca **Local REST API** → Installa e abilita
-3. Vai nelle impostazioni del plugin → copia la **API Key** (inizia con `obsidian-`)
-
-### 4. Configura il MCP NotebookLM
+### 3. Configura il MCP NotebookLM
 
 ```bash
 npx notebooklm-mcp@latest
@@ -63,14 +57,16 @@ npx notebooklm-mcp@latest
 
 Segui il prompt per il login Google (si apre Chrome, lo fai una volta sola).
 
-### 5. Aggiungi i MCP a Claude Code
+### 4. Aggiungi i MCP a Claude Code
 
 ```bash
 claude mcp add notebooklm -- npx notebooklm-mcp@latest
+```
 
-claude mcp add obsidian -- npx mcp-obsidian \
-  --env OBSIDIAN_API_KEY=la_tua_key \
-  --env OBSIDIAN_HOST=http://localhost:27123
+Per Obsidian, passa il percorso del tuo vault:
+
+```bash
+claude mcp add obsidian -- npx @bitbonsai/mcpvault C:\Users\tuonome\Documents\ObsidianVault
 ```
 
 Verifica: `claude mcp list` — devono comparire entrambi.
@@ -165,7 +161,7 @@ Vai sulla pagina del canale → tasto destro → Visualizza sorgente pagina → 
 ## Crediti
 
 - [notebooklm-mcp](https://github.com/PleasePrompto/notebooklm-mcp) — MCP per NotebookLM
-- [mcp-obsidian](https://github.com/MarkusPfundstein/mcp-obsidian) — MCP per Obsidian
+- [mcpvault](https://github.com/bitbonsai/mcpvault) — MCP per Obsidian
 - [Claude Code](https://claude.ai/code) — orchestrazione
 
 ---
