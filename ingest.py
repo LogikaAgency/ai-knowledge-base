@@ -167,7 +167,7 @@ def main():
     lookback_days = args.lookback_days if args.lookback_days is not None else config.get("lookback_days", 7)
     feeds = config.get("feeds", [])
 
-    print(f"=== Ingest RSS → NotebookLM ===")
+    print(f"=== Ingest RSS -> NotebookLM ===")
     print(f"Notebook: '{notebook}'")
     print(f"Feed attivi: {len(feeds)} | Max per feed: {max_per_feed} | Lookback: {lookback_days}gg")
     print(f"Massimo articoli stimato: {len(feeds) * max_per_feed} (limite notebook: 50)\n")
