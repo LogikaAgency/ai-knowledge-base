@@ -161,6 +161,18 @@ def main():
         updated = new_articles + existing
         save_cache(updated)
         print(f"Cache aggiornata: {len(updated)} articoli totali.")
+
+        # Aggiunge le fonti a NotebookLM se configurato
+        notebook_url = config.get("notebook_url", "")
+        if notebook_url:
+            print(f"\nAggiunta fonti a NotebookLM...")
+            import asyncio
+            from notebooklm_client import run_add_sources
+            urls = [a["url"] for a in new_articles]
+            added = asyncio.run(run_add_sources(notebook_url, urls))
+            print(f"NotebookLM: {added}/{len(urls)} fonti aggiunte.")
+        else:
+            print("\n(notebook_url non configurato in feeds.yaml — skip NotebookLM)")
     else:
         print("Nessun articolo nuovo.")
 

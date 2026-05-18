@@ -75,31 +75,52 @@ Ecco gli articoli recenti raccolti dai principali feed sull'intelligenza artific
 
 ---
 
-Crea un briefing giornaliero conciso con esattamente **3 punti chiave**.
+Crea un briefing giornaliero per Obsidian con esattamente **3 punti chiave**.
 
-Regole:
+Regole sul contenuto:
 - Seleziona solo le notizie piu rilevanti e interessanti
-- Ogni punto: titolo breve in grassetto + 2-3 righe di spiegazione
-- Indica sempre la fonte tra parentesi
-- Scrivi in italiano, tono diretto e professionale — niente hype inutile
-- Aggiungi il link originale per ogni punto
+- Ogni punto: titolo breve + 2-3 righe di spiegazione concreta, no hype
+- Scrivi in italiano, tono diretto e professionale
 
-Formato output (Markdown):
+Regole sul formato — IMPORTANTE, segui esattamente:
+1. Inizia SEMPRE con il blocco frontmatter YAML (tra i tre trattini)
+2. Nel campo "tags" metti tag specifici per topic: usa tag come modelli, open-source, sicurezza, agenti, business, ricerca, tool — scegli quelli pertinenti agli articoli
+3. Nel campo "fonti" elenca le fonti citate (nome del sito, una per riga con trattino)
+4. Usa i callout Obsidian per ogni punto: > [!info] Titolo
+5. Linka le fonti come [[Nome Fonte]] per creare backlink nel graph
+
+Formato OUTPUT esatto (non aggiungere niente prima del frontmatter):
+
+---
+date: {today}
+type: briefing
+tags: [briefing, AI, <tag-topic-1>, <tag-topic-2>]
+fonti:
+  - <Nome Fonte 1>
+  - <Nome Fonte 2>
+  - <Nome Fonte 3>
+articoli: {len(articles)}
+---
 
 # Briefing AI — {today}
 
-## 1. [Titolo punto]
-[Spiegazione 2-3 righe]
-*(Fonte: NomeFonte)* | [Leggi](<URL>)
+> [!info] 1. Titolo primo punto
+> Spiegazione 2-3 righe del primo punto.
+>
+> *[[Nome Fonte]]* · [Leggi l'articolo](URL)
 
-## 2. [Titolo punto]
-...
+> [!info] 2. Titolo secondo punto
+> Spiegazione 2-3 righe del secondo punto.
+>
+> *[[Nome Fonte]]* · [Leggi l'articolo](URL)
 
-## 3. [Titolo punto]
-...
+> [!info] 3. Titolo terzo punto
+> Spiegazione 2-3 righe del terzo punto.
+>
+> *[[Nome Fonte]]* · [Leggi l'articolo](URL)
 
 ---
-*Generato da {len(articles)} articoli — {today}*
+*Generato automaticamente da {len(articles)} articoli*
 """
 
 
@@ -115,30 +136,50 @@ Ecco tutti gli articoli della settimana raccolti dai principali feed sull'intell
 
 ---
 
-Crea un digest settimanale strutturato in **5 sezioni tematiche**.
+Crea un digest settimanale per Obsidian strutturato in sezioni tematiche.
 
-Regole:
+Regole sul contenuto:
 - Raggruppa le notizie per tema (es: Nuovi Modelli, Tool e Framework, Ricerca, Business AI, Community)
-- Ogni sezione: 2-4 notizie sintetizzate in 1-2 righe ciascuna con fonte e link
+- Ogni notizia: 1-2 righe di sintesi concreta, no hype
 - Scrivi in italiano, tono diretto e professionale
-- Alla fine: sezione "Takeaway della settimana" con 2-3 insight chiave
+- Alla fine: sezione Takeaway con 2-3 insight chiave della settimana
 
-Formato output (Markdown):
+Regole sul formato — IMPORTANTE, segui esattamente:
+1. Inizia SEMPRE con il blocco frontmatter YAML
+2. Nel campo "tags" metti tag specifici per i temi trattati questa settimana
+3. Nel campo "fonti" elenca tutte le fonti citate
+4. Ogni sezione tematica: usa header ## con emoji per il tema
+5. Linka le fonti come [[Nome Fonte]] per i backlink nel graph
+6. Ogni notizia come bullet point con link all'articolo
+
+Formato OUTPUT esatto:
+
+---
+date: {today}
+week: {week}
+type: digest
+tags: [digest, AI, <tag-tema-1>, <tag-tema-2>, <tag-tema-3>]
+fonti:
+  - <Nome Fonte 1>
+  - <Nome Fonte 2>
+articoli: {len(articles)}
+---
 
 # Digest AI — {week}
 
-## [Tema 1]
-- **[Titolo]**: [Sintesi]. *(Fonte)* | [Link](<URL>)
+## 🤖 [Tema 1]
+- **[Titolo notizia]**: [Sintesi 1-2 righe]. *[[Nome Fonte]]* · [Link](URL)
 
-## [Tema 2]
-...
-
----
-## Takeaway della settimana
+## 🔧 [Tema 2]
 - ...
 
+## 📊 Takeaway della settimana
+- [Insight chiave 1]
+- [Insight chiave 2]
+- [Insight chiave 3]
+
 ---
-*Generato da {len(articles)} articoli — {today}*
+*Generato automaticamente da {len(articles)} articoli — {today}*
 """
 
 
@@ -165,11 +206,10 @@ Formato: Markdown con titolo, sezioni tematiche e citazioni.
 """
 
 
-def call_gemini(prompt: str, api_key: str, model: str = "gemini-2.0-flash") -> str:
-    import google.generativeai as genai
-    genai.configure(api_key=api_key)
-    client = genai.GenerativeModel(model)
-    response = client.generate_content(prompt)
+def call_gemini(prompt: str, api_key: str, model: str = "gemini-2.5-flash") -> str:
+    from google import genai
+    client = genai.Client(api_key=api_key)
+    response = client.models.generate_content(model=model, contents=prompt)
     return response.text
 
 
@@ -194,7 +234,7 @@ def main():
     parser.add_argument("--daily", action="store_true", help="Briefing giornaliero (3 punti)")
     parser.add_argument("--topic", type=str, help="Query su un tema specifico")
     parser.add_argument("--lookback-days", type=int, default=None)
-    parser.add_argument("--model", default=None, help="Modello Gemini (default: gemini-2.0-flash)")
+    parser.add_argument("--model", default=None, help="Modello Gemini (default: gemini-2.5-flash)")
     args = parser.parse_args()
 
     config = load_config()
@@ -208,7 +248,7 @@ def main():
         sys.exit(1)
 
     vault_path = config.get("obsidian_vault", "")
-    model = args.model or config.get("gemini_model", "gemini-2.0-flash")
+    model = args.model or config.get("gemini_model", "gemini-2.5-flash")
 
     if args.lookback_days is not None:
         lookback = args.lookback_days

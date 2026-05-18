@@ -7,15 +7,19 @@
 max_articles_per_feed: 2
 lookback_days: 7
 
+# URL del notebook NotebookLM attivo.
+# AGGIORNA ogni settimana (o usa: python notebooklm_client.py --create-notebook "AI Weekly — 2026-W21")
+notebook_url: "INCOLLA_QUI_URL_NOTEBOOK"
+
 # Gemini API key — ottienila gratis su aistudio.google.com
 gemini_api_key: "INCOLLA_QUI_LA_TUA_API_KEY"
 
 # Modello Gemini da usare (gemini-2.0-flash e gratuito e veloce)
-gemini_model: "gemini-2.0-flash"
+gemini_model: "gemini-2.5-flash"
 
 # Percorso del vault Obsidian — cartella dove salvare i briefing
 # es. C:\Users\TuoNome\Documents\MioVault
-obsidian_vault: "C:\\Users\\franc\\ObsidianVaults"
+obsidian_vault: "C:\\Users\\TuoNome\\Documents\\NomeVault"
 
 # Sottocartella dentro il vault dove vanno i briefing
 obsidian_folder: "AI Digest"
