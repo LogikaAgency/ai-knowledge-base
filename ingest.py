@@ -1,6 +1,10 @@
 """
 ingest.py — Fetcha RSS e aggiunge nuovi articoli a NotebookLM via Claude
 
+Crea automaticamente un notebook per settimana (es. "AI Weekly — 2026-W21").
+Limite NotebookLM: 50 fonti per notebook. Con max_articles_per_feed: 2
+e ~25 feed attivi si rimane dentro il limite.
+
 Uso:
   python ingest.py                           # usa feeds.yaml, lookback da config
   python ingest.py --lookback-days 1         # solo articoli delle ultime 24h
@@ -26,6 +30,15 @@ from dateutil import parser as dateparser
 SEEN_FILE = Path(__file__).parent / ".seen_urls.json"
 
 
+def get_weekly_notebook_name(prefix: str) -> str:
+    """Ritorna il nome del notebook per la settimana corrente.
+    Es: "AI Weekly — 2026-W21"
+    """
+    now = datetime.now()
+    week = now.strftime("%Y-W%W")
+    return f"{prefix} — {week}"
+
+
 def load_seen_urls() -> set:
     if SEEN_FILE.exists():
         return set(json.loads(SEEN_FILE.read_text()))
@@ -44,6 +57,7 @@ def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen:
     for feed_cfg in feeds:
         url = feed_cfg["url"]
         name = feed_cfg.get("name", url)
+        feed_max = feed_cfg.get("max_articles_per_feed", max_per_feed)
         print(f"  Fetching {name}...")
 
         try:
@@ -54,7 +68,7 @@ def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen:
 
         count = 0
         for entry in feed.entries:
-            if count >= max_per_feed:
+            if count >= feed_max:
                 break
 
             article_url = entry.get("link", "")
@@ -65,13 +79,12 @@ def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen:
             published = None
             for date_field in ["published_parsed", "updated_parsed"]:
                 if hasattr(entry, date_field) and getattr(entry, date_field):
-                    import time
                     t = getattr(entry, date_field)
                     published = datetime(*t[:6], tzinfo=timezone.utc)
                     break
 
             if published and published < cutoff:
-                continue  # troppo vecchio
+                continue
 
             new_articles.append({
                 "url": article_url,
@@ -87,28 +100,31 @@ def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen:
 
 
 def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
-    """Usa claude -p per aggiungere gli URL al notebook NotebookLM."""
+    """Usa claude -p per creare il notebook se non esiste e aggiungere gli URL."""
     if not articles:
         print("\nNessun articolo nuovo da aggiungere.")
         return
 
-    urls = [a["url"] for a in articles]
     titles = [f"- {a['title']} ({a['source']})" for a in articles]
-
     print(f"\nAggiungo {len(articles)} articoli al notebook '{notebook}':")
     for t in titles:
         print(f"  {t}")
+
+    # Avviso se si rischia di superare il limite
+    if len(articles) > 45:
+        print(f"\n⚠ ATTENZIONE: {len(articles)} articoli si avvicinano al limite di 50 fonti per notebook.")
+        print("  Considera di ridurre max_articles_per_feed o il numero di feed attivi in feeds.yaml.")
 
     if dry_run:
         print("\n[DRY RUN] Nessuna modifica effettuata.")
         return
 
-    # Costruisci il prompt per Claude
-    url_list = "\n".join(urls)
+    url_list = "\n".join(a["url"] for a in articles)
     prompt = (
-        f"Apri il notebook '{notebook}' in NotebookLM e aggiungi questi URL come fonti. "
-        f"Aggiungili uno alla volta usando il tool add_source. "
-        f"Se un URL non è raggiungibile, saltalo e continua con il prossimo.\n\n"
+        f"Usa il tool list_notebooks per verificare se esiste già un notebook chiamato '{notebook}'.\n"
+        f"Se non esiste, crealo su NotebookLM con add_notebook.\n"
+        f"Poi aggiungi questi URL come fonti con add_source, uno alla volta.\n"
+        f"Se un URL non è raggiungibile o dà errore, saltalo e continua.\n\n"
         f"URL da aggiungere:\n{url_list}"
     )
 
@@ -117,7 +133,7 @@ def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
         ["claude", "-p", prompt],
         capture_output=True,
         text=True,
-        timeout=300,  # 5 minuti max
+        timeout=300,
     )
 
     if result.returncode != 0:
@@ -136,33 +152,34 @@ def main():
     parser.add_argument("--lookback-days", type=int, default=None, help="Override lookback_days da config")
     args = parser.parse_args()
 
-    # Carica config
     config_path = Path(args.config)
     if not config_path.exists():
         print(f"Config non trovata: {config_path}")
         sys.exit(1)
 
     config = yaml.safe_load(config_path.read_text())
-    notebook = config["notebook"]
-    max_per_feed = config.get("max_articles_per_feed", 5)
+
+    # Nome notebook con settimana automatica
+    prefix = config.get("notebook_prefix", config.get("notebook", "AI Weekly"))
+    notebook = get_weekly_notebook_name(prefix)
+
+    max_per_feed = config.get("max_articles_per_feed", 2)
     lookback_days = args.lookback_days if args.lookback_days is not None else config.get("lookback_days", 7)
     feeds = config.get("feeds", [])
 
-    print(f"=== Ingest RSS → NotebookLM '{notebook}' ===")
-    print(f"Feed configurati: {len(feeds)} | Lookback: {lookback_days} giorni\n")
+    print(f"=== Ingest RSS → NotebookLM ===")
+    print(f"Notebook: '{notebook}'")
+    print(f"Feed attivi: {len(feeds)} | Max per feed: {max_per_feed} | Lookback: {lookback_days}gg")
+    print(f"Massimo articoli stimato: {len(feeds) * max_per_feed} (limite notebook: 50)\n")
 
-    # Carica URL già visti
     seen = load_seen_urls()
     print(f"URL già in archivio: {len(seen)}\n")
 
-    # Fetch nuovi articoli
     print("Fetching feed...")
     new_articles = fetch_new_articles(feeds, max_per_feed, lookback_days, seen)
 
-    # Aggiungi a NotebookLM
     add_to_notebooklm(new_articles, notebook, dry_run=args.dry_run)
 
-    # Salva gli URL visti (anche in dry-run, per non riprocessarli)
     if not args.dry_run:
         save_seen_urls(seen)
         print(f"Archivio aggiornato: {len(seen)} URL totali.")

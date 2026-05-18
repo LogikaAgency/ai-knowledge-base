@@ -4,8 +4,10 @@
 # Attiva/disattiva le fonti commentando/decommentando le righe.
 # Tutto quello che è decommentato viene fetchato in automatico.
 
-notebook: "AI Weekly"
-max_articles_per_feed: 5
+# Nome base del notebook — la settimana viene aggiunta automaticamente
+# es. "AI Weekly — 2026-W21"
+notebook_prefix: "AI Weekly"
+max_articles_per_feed: 2   # 2 per feed × ~25 feed attivi = ~50 fonti/settimana
 lookback_days: 7
 
 
