@@ -1,23 +1,22 @@
 """
-ingest.py — Fetcha RSS e aggiunge nuovi articoli a NotebookLM via Claude
+ingest.py — Fetcha RSS e salva articoli in articles_cache.json
 
-Crea automaticamente un notebook per settimana (es. "AI Weekly — 2026-W21").
-Limite NotebookLM: 50 fonti per notebook. Con max_articles_per_feed: 2
-e ~25 feed attivi si rimane dentro il limite.
+Non richiede Claude, MCP, o browser. Solo Python puro.
+Esegui questo script ogni giorno — salva gli articoli nuovi in cache
+per digest.py che li processerà con Gemini API.
 
 Uso:
-  python ingest.py                           # usa feeds.yaml, lookback da config
-  python ingest.py --lookback-days 1         # solo articoli delle ultime 24h
-  python ingest.py --dry-run                 # mostra cosa aggiungerebbe senza farlo
+  python ingest.py                     # usa feeds.yaml, lookback da config
+  python ingest.py --lookback-days 1   # solo articoli delle ultime 24h
+  python ingest.py --dry-run           # mostra cosa fetcherebbe senza salvare
 
 Richiede:
   pip install feedparser pyyaml python-dateutil
-  Claude Code installato e configurato con notebooklm MCP
 """
 
 import argparse
 import json
-import subprocess
+import re
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -26,54 +25,35 @@ import feedparser
 import yaml
 from dateutil import parser as dateparser
 
-# File locale che tiene traccia degli URL già aggiunti (evita duplicati)
-SEEN_FILE = Path(__file__).parent / ".seen_urls.json"
+CACHE_FILE = Path(__file__).parent / "articles_cache.json"
 
 
-def find_claude_exe() -> str:
-    """Trova il path di claude.exe — cerca prima nel PATH, poi nelle estensioni Cursor."""
-    import shutil
-
-    # 1. Prova nel PATH di sistema (installazione npm/standalone)
-    found = shutil.which("claude")
-    if found:
-        return found
-
-    # 2. Cerca nell'estensione Cursor — prende la versione più recente
-    cursor_base = Path.home() / ".cursor" / "extensions"
-    if cursor_base.exists():
-        candidates = sorted(
-            cursor_base.glob("anthropic.claude-code-*/resources/native-binary/claude.exe"),
-            reverse=True,  # ordine decrescente → versione più alta per prima
-        )
-        if candidates:
-            return str(candidates[0])
-
-    # 3. Fallback — speriamo sia nel PATH al momento dell'esecuzione
-    return "claude"
+def strip_html(text: str) -> str:
+    """Rimuove tag HTML e normalizza spazi."""
+    if not text:
+        return ""
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
-def get_weekly_notebook_name(prefix: str) -> str:
-    """Ritorna il nome del notebook per la settimana corrente.
-    Es: "AI Weekly — 2026-W21"
-    """
-    now = datetime.now()
-    week = now.strftime("%Y-W%W")
-    return f"{prefix} — {week}"
+def load_cache() -> list:
+    if CACHE_FILE.exists():
+        return json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+    return []
 
 
-def load_seen_urls() -> set:
-    if SEEN_FILE.exists():
-        return set(json.loads(SEEN_FILE.read_text()))
-    return set()
+def save_cache(articles: list):
+    # Mantieni al massimo 500 articoli — evita che il file cresca all'infinito
+    articles = articles[:500]
+    CACHE_FILE.write_text(
+        json.dumps(articles, ensure_ascii=False, indent=2),
+        encoding="utf-8"
+    )
 
 
-def save_seen_urls(urls: set):
-    SEEN_FILE.write_text(json.dumps(list(urls), indent=2))
-
-
-def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen: set) -> list:
-    """Ritorna lista di dict {url, title, source} con articoli nuovi e recenti."""
+def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen_urls: set) -> list:
+    """Fetcha i feed RSS e ritorna articoli nuovi con metadati completi."""
     cutoff = datetime.now(timezone.utc) - timedelta(days=lookback_days)
     new_articles = []
 
@@ -81,7 +61,7 @@ def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen:
         url = feed_cfg["url"]
         name = feed_cfg.get("name", url)
         feed_max = feed_cfg.get("max_articles_per_feed", max_per_feed)
-        print(f"  Fetching {name}...")
+        print(f"  {name}...")
 
         try:
             feed = feedparser.parse(url)
@@ -95,92 +75,55 @@ def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen:
                 break
 
             article_url = entry.get("link", "")
-            if not article_url or article_url in seen:
+            if not article_url or article_url in seen_urls:
                 continue
 
-            # Controlla data pubblicazione
+            # Data pubblicazione
             published = None
             for date_field in ["published_parsed", "updated_parsed"]:
                 if hasattr(entry, date_field) and getattr(entry, date_field):
                     t = getattr(entry, date_field)
-                    published = datetime(*t[:6], tzinfo=timezone.utc)
+                    try:
+                        published = datetime(*t[:6], tzinfo=timezone.utc)
+                    except Exception:
+                        pass
                     break
 
             if published and published < cutoff:
                 continue
 
+            # Descrizione dall'RSS (titolo + summary se disponibile)
+            description = ""
+            for field in ["summary", "description", "content"]:
+                val = entry.get(field, "")
+                if isinstance(val, list) and val:
+                    val = val[0].get("value", "")
+                if val:
+                    description = strip_html(val)[:600]
+                    break
+
             new_articles.append({
                 "url": article_url,
-                "title": entry.get("title", "Senza titolo"),
+                "title": strip_html(entry.get("title", "Senza titolo")),
                 "source": name,
+                "description": description,
+                "published": published.isoformat() if published else datetime.now(timezone.utc).isoformat(),
+                "added_at": datetime.now(timezone.utc).isoformat(),
             })
-            seen.add(article_url)
+            seen_urls.add(article_url)
             count += 1
 
-        print(f"    {count} nuovi articoli trovati")
+        if count > 0:
+            print(f"    {count} nuovi articoli")
 
     return new_articles
 
 
-def add_to_notebooklm(articles: list, notebook: str, notebook_url: str, dry_run: bool = False):
-    """Usa claude -p per aggiungere gli URL al notebook NotebookLM."""
-    if not articles:
-        print("\nNessun articolo nuovo da aggiungere.")
-        return
-
-    titles = [f"- {a['title']} ({a['source']})" for a in articles]
-    print(f"\nAggiungo {len(articles)} articoli al notebook '{notebook}':")
-    for t in titles:
-        print(f"  {t}")
-
-    # Avviso se si rischia di superare il limite
-    if len(articles) > 45:
-        print(f"\nATTENZIONE: {len(articles)} articoli si avvicinano al limite di 50 fonti per notebook.")
-        print("  Considera di ridurre max_articles_per_feed o il numero di feed attivi in feeds.yaml.")
-
-    if dry_run:
-        print("\n[DRY RUN] Nessuna modifica effettuata.")
-        return
-
-    if not notebook_url:
-        print("\nERRORE: 'notebook_url' non configurato in feeds.yaml.")
-        print("  Crea il notebook su notebooklm.google.com, condividilo e incolla l'URL in feeds.yaml.")
-        sys.exit(1)
-
-    url_list = "\n".join(a["url"] for a in articles)
-    prompt = (
-        f"Aggiungi questi URL come fonti al notebook NotebookLM con URL: {notebook_url}\n"
-        f"Usa il tool add_source con il parametro notebook_url='{notebook_url}', uno alla volta per ogni URL.\n"
-        f"Se un URL non e raggiungibile o da errore, saltalo e continua con il prossimo.\n"
-        f"Non usare add_notebook o list_notebooks — usa direttamente add_source con notebook_url.\n\n"
-        f"URL da aggiungere:\n{url_list}"
-    )
-
-    claude_path = find_claude_exe()
-    print(f"\nChiamando Claude ({claude_path})...")
-
-    result = subprocess.run(
-        [claude_path, "-p", prompt, "--dangerously-skip-permissions"],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        encoding="utf-8",
-    )
-
-    if result.returncode != 0:
-        print(f"ERRORE Claude:\n{result.stderr}")
-        sys.exit(1)
-
-    print("Fatto.\n")
-    if result.stdout.strip():
-        print(result.stdout.strip())
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Ingest RSS feeds in NotebookLM")
+    parser = argparse.ArgumentParser(description="Fetch RSS feeds -> articles_cache.json")
     parser.add_argument("--config", default=Path(__file__).parent / "feeds.yaml")
-    parser.add_argument("--dry-run", action="store_true", help="Mostra cosa farebbe senza eseguire")
-    parser.add_argument("--lookback-days", type=int, default=None, help="Override lookback_days da config")
+    parser.add_argument("--dry-run", action="store_true", help="Mostra cosa fetcherebbe senza salvare")
+    parser.add_argument("--lookback-days", type=int, default=None)
     args = parser.parse_args()
 
     config_path = Path(args.config)
@@ -188,34 +131,38 @@ def main():
         print(f"Config non trovata: {config_path}")
         sys.exit(1)
 
-    config = yaml.safe_load(config_path.read_text())
-
-    # Nome notebook con settimana automatica
-    prefix = config.get("notebook_prefix", config.get("notebook", "AI Weekly"))
-    notebook = get_weekly_notebook_name(prefix)
+    config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
 
     max_per_feed = config.get("max_articles_per_feed", 2)
     lookback_days = args.lookback_days if args.lookback_days is not None else config.get("lookback_days", 7)
     feeds = config.get("feeds", [])
-    notebook_url = config.get("notebook_url", "")
 
-    print(f"=== Ingest RSS -> NotebookLM ===")
-    print(f"Notebook: '{notebook}'")
-    print(f"URL:      {notebook_url or '(non configurato in feeds.yaml)'}")
-    print(f"Feed attivi: {len(feeds)} | Max per feed: {max_per_feed} | Lookback: {lookback_days}gg")
-    print(f"Massimo articoli stimato: {len(feeds) * max_per_feed} (limite notebook: 50)\n")
+    print(f"=== Ingest RSS ===")
+    print(f"Feed attivi: {len(feeds)} | Max per feed: {max_per_feed} | Lookback: {lookback_days}gg\n")
 
-    seen = load_seen_urls()
-    print(f"URL già in archivio: {len(seen)}\n")
+    # Carica cache esistente
+    existing = load_cache()
+    seen_urls = {a["url"] for a in existing}
+    print(f"Articoli in cache: {len(existing)}\n")
 
     print("Fetching feed...")
-    new_articles = fetch_new_articles(feeds, max_per_feed, lookback_days, seen)
+    new_articles = fetch_new_articles(feeds, max_per_feed, lookback_days, seen_urls)
 
-    add_to_notebooklm(new_articles, notebook, notebook_url=notebook_url, dry_run=args.dry_run)
+    print(f"\nNuovi articoli trovati: {len(new_articles)}")
 
-    if not args.dry_run:
-        save_seen_urls(seen)
-        print(f"Archivio aggiornato: {len(seen)} URL totali.")
+    if args.dry_run:
+        print("\n[DRY RUN] Nessuna modifica alla cache.")
+        for a in new_articles:
+            print(f"  - {a['title']} ({a['source']})")
+        return
+
+    if new_articles:
+        # Nuovi articoli in cima, esistenti in fondo
+        updated = new_articles + existing
+        save_cache(updated)
+        print(f"Cache aggiornata: {len(updated)} articoli totali.")
+    else:
+        print("Nessun articolo nuovo.")
 
 
 if __name__ == "__main__":

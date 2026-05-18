@@ -4,16 +4,21 @@
 # Attiva/disattiva le fonti commentando/decommentando le righe.
 # Tutto quello che è decommentato viene fetchato in automatico.
 
-# Nome base del notebook — la settimana viene aggiunta automaticamente
-# es. "AI Weekly — 2026-W21"
-notebook_prefix: "AI Weekly"
-max_articles_per_feed: 2   # 2 per feed × ~25 feed attivi = ~50 fonti/settimana
+max_articles_per_feed: 2
 lookback_days: 7
 
-# URL del notebook NotebookLM attivo per questa settimana.
-# AGGIORNA OGNI LUNEDI: crea il notebook su notebooklm.google.com,
-# clicca Share → "Anyone with the link" → copia il link e incollalo qui.
-notebook_url: "https://notebooklm.google.com/notebook/328ab24c-698c-43e2-a1a2-c75cd64a3156"
+# Gemini API key — ottienila gratis su aistudio.google.com
+gemini_api_key: "INCOLLA_QUI_LA_TUA_API_KEY"
+
+# Modello Gemini da usare (gemini-2.0-flash e gratuito e veloce)
+gemini_model: "gemini-2.0-flash"
+
+# Percorso del vault Obsidian — cartella dove salvare i briefing
+# es. C:\Users\TuoNome\Documents\MioVault
+obsidian_vault: "C:\\Users\\franc\\ObsidianVaults"
+
+# Sottocartella dentro il vault dove vanno i briefing
+obsidian_folder: "AI Digest"
 
 
 # ── MODELLI FRONTIER — annunci ufficiali ──────────────────────────────────────
