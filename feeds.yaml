@@ -10,6 +10,11 @@ notebook_prefix: "AI Weekly"
 max_articles_per_feed: 2   # 2 per feed × ~25 feed attivi = ~50 fonti/settimana
 lookback_days: 7
 
+# URL del notebook NotebookLM attivo per questa settimana.
+# AGGIORNA OGNI LUNEDI: crea il notebook su notebooklm.google.com,
+# clicca Share → "Anyone with the link" → copia il link e incollalo qui.
+notebook_url: "https://notebooklm.google.com/notebook/328ab24c-698c-43e2-a1a2-c75cd64a3156"
+
 
 # ── MODELLI FRONTIER — annunci ufficiali ──────────────────────────────────────
 # Le release dei modelli principali. Da seguire tutti.

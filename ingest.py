@@ -122,8 +122,8 @@ def fetch_new_articles(feeds: list, max_per_feed: int, lookback_days: int, seen:
     return new_articles
 
 
-def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
-    """Usa claude -p per creare il notebook se non esiste e aggiungere gli URL."""
+def add_to_notebooklm(articles: list, notebook: str, notebook_url: str, dry_run: bool = False):
+    """Usa claude -p per aggiungere gli URL al notebook NotebookLM."""
     if not articles:
         print("\nNessun articolo nuovo da aggiungere.")
         return
@@ -135,19 +135,24 @@ def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
 
     # Avviso se si rischia di superare il limite
     if len(articles) > 45:
-        print(f"\n⚠ ATTENZIONE: {len(articles)} articoli si avvicinano al limite di 50 fonti per notebook.")
+        print(f"\nATTENZIONE: {len(articles)} articoli si avvicinano al limite di 50 fonti per notebook.")
         print("  Considera di ridurre max_articles_per_feed o il numero di feed attivi in feeds.yaml.")
 
     if dry_run:
         print("\n[DRY RUN] Nessuna modifica effettuata.")
         return
 
+    if not notebook_url:
+        print("\nERRORE: 'notebook_url' non configurato in feeds.yaml.")
+        print("  Crea il notebook su notebooklm.google.com, condividilo e incolla l'URL in feeds.yaml.")
+        sys.exit(1)
+
     url_list = "\n".join(a["url"] for a in articles)
     prompt = (
-        f"Usa il tool list_notebooks per verificare se esiste già un notebook chiamato '{notebook}'.\n"
-        f"Se non esiste, crealo su NotebookLM con add_notebook.\n"
-        f"Poi aggiungi questi URL come fonti con add_source, uno alla volta.\n"
-        f"Se un URL non è raggiungibile o dà errore, saltalo e continua.\n\n"
+        f"Aggiungi questi URL come fonti al notebook NotebookLM con URL: {notebook_url}\n"
+        f"Usa il tool add_source con il parametro notebook_url='{notebook_url}', uno alla volta per ogni URL.\n"
+        f"Se un URL non e raggiungibile o da errore, saltalo e continua con il prossimo.\n"
+        f"Non usare add_notebook o list_notebooks — usa direttamente add_source con notebook_url.\n\n"
         f"URL da aggiungere:\n{url_list}"
     )
 
@@ -192,9 +197,11 @@ def main():
     max_per_feed = config.get("max_articles_per_feed", 2)
     lookback_days = args.lookback_days if args.lookback_days is not None else config.get("lookback_days", 7)
     feeds = config.get("feeds", [])
+    notebook_url = config.get("notebook_url", "")
 
     print(f"=== Ingest RSS -> NotebookLM ===")
     print(f"Notebook: '{notebook}'")
+    print(f"URL:      {notebook_url or '(non configurato in feeds.yaml)'}")
     print(f"Feed attivi: {len(feeds)} | Max per feed: {max_per_feed} | Lookback: {lookback_days}gg")
     print(f"Massimo articoli stimato: {len(feeds) * max_per_feed} (limite notebook: 50)\n")
 
@@ -204,7 +211,7 @@ def main():
     print("Fetching feed...")
     new_articles = fetch_new_articles(feeds, max_per_feed, lookback_days, seen)
 
-    add_to_notebooklm(new_articles, notebook, dry_run=args.dry_run)
+    add_to_notebooklm(new_articles, notebook, notebook_url=notebook_url, dry_run=args.dry_run)
 
     if not args.dry_run:
         save_seen_urls(seen)
