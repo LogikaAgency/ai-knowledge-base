@@ -1,0 +1,126 @@
+# ============================================================
+# FONTI AUTOMATICHE — fetchate ogni settimana via cron
+# ============================================================
+# Modifica liberamente. Il sistema carica solo gli articoli
+# nuovi grazie alla deduplicazione automatica su .seen_urls.json
+
+notebook: "AI Weekly"
+max_articles_per_feed: 5
+lookback_days: 7
+
+feeds:
+
+  # ── AGGIORNAMENTI UFFICIALI ────────────────────────────────
+  # Le release note dei modelli — roba che devi sapere per forza
+
+  - url: https://openai.com/blog/rss.xml
+    name: OpenAI Blog
+
+  - url: https://www.anthropic.com/rss.xml
+    name: Anthropic Blog
+
+  - url: https://deepmind.google/blog/rss.xml
+    name: Google DeepMind Blog
+
+  - url: https://ai.meta.com/blog/rss/
+    name: Meta AI Blog
+
+  - url: https://huggingface.co/blog/feed.xml
+    name: Hugging Face Blog
+
+  - url: https://mistral.ai/news/rss/
+    name: Mistral AI News
+
+
+  # ── NEWSLETTER ─────────────────────────────────────────────
+  # Già filtrate da qualcuno — alto rapporto segnale/rumore
+
+  - url: https://tldr.tech/ai/rss
+    name: TLDR AI
+    # quotidiano, denso, ottimo per non perdere niente
+
+  - url: https://www.bensbites.co/feed
+    name: Ben's Bites
+    # Substack, settimanale, buona copertura di tool e prodotti
+
+  - url: https://jack-clark.net/feed/
+    name: Import AI (Jack Clark)
+    # settimanale, tecnico, paper + policy
+
+  - url: https://www.deeplearning.ai/the-batch/rss/
+    name: The Batch (Andrew Ng)
+    # settimanale, equilibrato tra ricerca e applicazioni
+
+  # Aggiungi altre newsletter Substack con:
+  # https://nomeutente.substack.com/feed
+
+
+  # ── TECH NEWS ──────────────────────────────────────────────
+
+  - url: https://techcrunch.com/category/artificial-intelligence/feed/
+    name: TechCrunch AI
+
+  - url: https://feeds.arstechnica.com/arstechnica/technology-lab
+    name: Ars Technica Tech Lab
+
+  - url: https://www.wired.com/feed/tag/ai/latest/rss
+    name: Wired AI
+
+
+  # ── YOUTUBE ────────────────────────────────────────────────
+  # RSS nativo, niente API key — prende titolo + descrizione del video
+  # Per i transcript: youtube-transcript-api (Python, gratuito)
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbmNph6atAoGfqLoCL_duAg
+    name: Andrej Karpathy
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew
+    name: Yannic Kilcher (paper spiegati)
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg
+    name: Two Minute Papers
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCNJ1Ymd5yFuUPtn21xtRbbw
+    name: AI Explained
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCjeHd5vRCORATU_-AiocTBg
+    name: Matthew Berman
+
+  # Per aggiungere altri canali YouTube:
+  # 1. Vai sul canale → tasto destro → Visualizza sorgente → cerca "channelId"
+  #    oppure usa: https://commentpicker.com/youtube-channel-id.php
+  # 2. Formato URL: https://www.youtube.com/feeds/videos.xml?channel_id=UCxxxxxxx
+
+
+  # ── PAPER E RICERCA (opzionale) ───────────────────────────
+  # Volume alto — usa max_articles_per_feed: 3 per questi
+
+  # - url: https://arxiv.org/rss/cs.AI
+  #   name: ArXiv AI
+  #   max_articles_per_feed: 3
+
+  # - url: https://arxiv.org/rss/cs.LG
+  #   name: ArXiv Machine Learning
+  #   max_articles_per_feed: 3
+
+  # - url: https://arxiv.org/rss/cs.CL
+  #   name: ArXiv NLP / LLM
+  #   max_articles_per_feed: 3
+
+
+# ============================================================
+# FONTI MANUALI (aggiungi direttamente in NotebookLM)
+# ============================================================
+# Non automatizzare queste — non ne vale la pena:
+#
+# TWITTER/X   → API ufficiale: $100/mese. Quando vedi un thread
+#               interessante, copia l'URL e aggiungilo a mano.
+#
+# LINKEDIN    → No API pubblica. Stesso approccio: URL → manuale.
+#
+# PDF/PAPER   → Carica il file direttamente in NotebookLM,
+#               oppure incolla l'URL (es. link ArXiv pubblico).
+#
+# REGOLA:     Automatizza le fonti regolari (newsletter, blog, YouTube).
+#             Aggiungi a mano quello che trovi per caso.
+#             10 secondi per aggiungere un URL > pagare API.

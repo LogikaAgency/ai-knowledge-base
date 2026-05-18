@@ -1,0 +1,12 @@
+# Generati automaticamente — non committare
+.seen_urls.json
+daily_run.log
+weekly_run.log
+
+# Variabili d'ambiente
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

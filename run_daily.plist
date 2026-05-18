@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd plist per Mac — piu affidabile di cron perche si avvia
+  anche se il Mac era spento all'orario pianificato.
+
+  INSTALLAZIONE:
+    1. Copia questo file in ~/Library/LaunchAgents/
+       cp run_daily.plist ~/Library/LaunchAgents/com.logika.ai-briefing.plist
+
+    2. Modifica il percorso dello script (cerca PERCORSO_SCRIPT_QUI)
+
+    3. Carica il job:
+       launchctl load ~/Library/LaunchAgents/com.logika.ai-briefing.plist
+
+    4. Per disattivarlo:
+       launchctl unload ~/Library/LaunchAgents/com.logika.ai-briefing.plist
+
+    5. Per testarlo subito:
+       launchctl start com.logika.ai-briefing
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.logika.ai-briefing</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <!-- SOSTITUISCI con il percorso reale dello script -->
+        <string>PERCORSO_SCRIPT_QUI/run_daily.sh</string>
+    </array>
+
+    <!-- Ogni giorno alle 06:30 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>6</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+
+    <!-- Si avvia anche se il Mac era spento all'orario previsto -->
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/logika-briefing.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/logika-briefing-error.log</string>
+</dict>
+</plist>
