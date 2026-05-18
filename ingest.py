@@ -30,6 +30,29 @@ from dateutil import parser as dateparser
 SEEN_FILE = Path(__file__).parent / ".seen_urls.json"
 
 
+def find_claude_exe() -> str:
+    """Trova il path di claude.exe — cerca prima nel PATH, poi nelle estensioni Cursor."""
+    import shutil
+
+    # 1. Prova nel PATH di sistema (installazione npm/standalone)
+    found = shutil.which("claude")
+    if found:
+        return found
+
+    # 2. Cerca nell'estensione Cursor — prende la versione più recente
+    cursor_base = Path.home() / ".cursor" / "extensions"
+    if cursor_base.exists():
+        candidates = sorted(
+            cursor_base.glob("anthropic.claude-code-*/resources/native-binary/claude.exe"),
+            reverse=True,  # ordine decrescente → versione più alta per prima
+        )
+        if candidates:
+            return str(candidates[0])
+
+    # 3. Fallback — speriamo sia nel PATH al momento dell'esecuzione
+    return "claude"
+
+
 def get_weekly_notebook_name(prefix: str) -> str:
     """Ritorna il nome del notebook per la settimana corrente.
     Es: "AI Weekly — 2026-W21"
@@ -128,26 +151,16 @@ def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
         f"URL da aggiungere:\n{url_list}"
     )
 
-    print("\nChiamando Claude...")
+    claude_path = find_claude_exe()
+    print(f"\nChiamando Claude ({claude_path})...")
 
-    # Su Windows, cmd.exe non gestisce prompt multi-riga con caratteri speciali.
-    # Scriviamo il prompt su un file temporaneo e lo passiamo via PowerShell.
-    import tempfile, os
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
-        f.write(prompt)
-        tmp_path = f.name
-
-    try:
-        ps_cmd = f'$p = Get-Content -Raw -Path "{tmp_path}"; & claude -p $p'
-        result = subprocess.run(
-            ["powershell", "-NonInteractive", "-Command", ps_cmd],
-            capture_output=True,
-            text=True,
-            timeout=300,
-            encoding="utf-8",
-        )
-    finally:
-        os.unlink(tmp_path)
+    result = subprocess.run(
+        [claude_path, "-p", prompt],
+        capture_output=True,
+        text=True,
+        timeout=300,
+        encoding="utf-8",
+    )
 
     if result.returncode != 0:
         print(f"ERRORE Claude:\n{result.stderr}")
