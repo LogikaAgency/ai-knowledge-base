@@ -134,6 +134,7 @@ def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
         capture_output=True,
         text=True,
         timeout=300,
+        shell=True,
     )
 
     if result.returncode != 0:
