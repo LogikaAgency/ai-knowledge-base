@@ -1,18 +1,18 @@
 # ============================================================
-# FONTI AUTOMATICHE — fetchate ogni settimana via cron
+# FONTI RSS — AI Knowledge Base
 # ============================================================
-# Modifica liberamente. Il sistema carica solo gli articoli
-# nuovi grazie alla deduplicazione automatica su .seen_urls.json
+# Attiva/disattiva le fonti commentando/decommentando le righe.
+# Tutto quello che è decommentato viene fetchato in automatico.
 
 notebook: "AI Weekly"
 max_articles_per_feed: 5
 lookback_days: 7
 
+
+# ── MODELLI FRONTIER — annunci ufficiali ──────────────────────────────────────
+# Le release dei modelli principali. Da seguire tutti.
+
 feeds:
-
-  # ── AGGIORNAMENTI UFFICIALI ────────────────────────────────
-  # Le release note dei modelli — roba che devi sapere per forza
-
   - url: https://openai.com/blog/rss.xml
     name: OpenAI Blog
 
@@ -25,37 +25,110 @@ feeds:
   - url: https://ai.meta.com/blog/rss/
     name: Meta AI Blog
 
+  - url: https://mistral.ai/news/rss/
+    name: Mistral AI
+
   - url: https://huggingface.co/blog/feed.xml
     name: Hugging Face Blog
+    # modelli open source, dataset, tool — aggiornamenti frequenti
 
-  - url: https://mistral.ai/news/rss/
-    name: Mistral AI News
+  - url: https://www.cohere.com/blog/rss
+    name: Cohere Blog
+
+  # - url: https://stability.ai/news/rss
+  #   name: Stability AI
+  #   # immagini, audio, video generativi
 
 
-  # ── NEWSLETTER ─────────────────────────────────────────────
-  # Già filtrate da qualcuno — alto rapporto segnale/rumore
+# ── BIG TECH AI — blog tecnici Microsoft, Google, AWS, NVIDIA ────────────────
+
+  - url: https://blogs.microsoft.com/ai/feed/
+    name: Microsoft AI Blog
+
+  - url: https://aws.amazon.com/blogs/machine-learning/feed/
+    name: AWS Machine Learning Blog
+
+  - url: https://developer.nvidia.com/blog/tag/generative-ai/feed/
+    name: NVIDIA Generative AI Blog
+
+  - url: https://research.google/blog/rss/
+    name: Google Research Blog
+
+  - url: https://www.microsoft.com/en-us/research/feed/
+    name: Microsoft Research Blog
+
+  # - url: https://machinelearning.apple.com/rss.xml
+  #   name: Apple ML Research
+  #   # tecnico, paper — volume basso ma qualità alta
+
+
+# ── TOOL E FRAMEWORK — LangChain, LlamaIndex, W&B, ecc. ─────────────────────
+
+  - url: https://blog.langchain.dev/rss/
+    name: LangChain Blog
+    # agenti, RAG, orchestrazione LLM
+
+  - url: https://www.llamaindex.ai/blog/rss.xml
+    name: LlamaIndex Blog
+    # RAG, knowledge base, retrieval
+
+  - url: https://wandb.ai/fully-connected/rss.xml
+    name: Weights & Biases Blog
+    # MLOps, training, valutazione modelli
+
+  - url: https://vercel.com/blog/rss.xml
+    name: Vercel Blog
+    # AI SDK, deployment, prodotti AI
+
+  - url: https://github.blog/feed/
+    name: GitHub Blog
+    # Copilot, AI features, developer tools
+
+
+# ── NEWSLETTER — alto rapporto segnale/rumore ────────────────────────────────
 
   - url: https://tldr.tech/ai/rss
     name: TLDR AI
-    # quotidiano, denso, ottimo per non perdere niente
+    # quotidiano, denso, 5 minuti di lettura — ottimo per non perdere niente
 
   - url: https://www.bensbites.co/feed
     name: Ben's Bites
-    # Substack, settimanale, buona copertura di tool e prodotti
+    # settimanale, tool e prodotti AI, tono pratico
 
   - url: https://jack-clark.net/feed/
-    name: Import AI (Jack Clark)
-    # settimanale, tecnico, paper + policy
+    name: Import AI (Jack Clark — ex OpenAI)
+    # settimanale, paper + policy + frontier AI
 
   - url: https://www.deeplearning.ai/the-batch/rss/
     name: The Batch (Andrew Ng)
     # settimanale, equilibrato tra ricerca e applicazioni
 
-  # Aggiungi altre newsletter Substack con:
-  # https://nomeutente.substack.com/feed
+  - url: https://magazine.sebastianraschka.com/feed
+    name: Ahead of AI (Sebastian Raschka)
+    # approfondimenti tecnici su LLM e ML — tra i migliori in circolazione
+
+  - url: https://www.interconnects.ai/feed
+    name: Interconnects (Nathan Lambert — ex HuggingFace)
+    # RLHF, allineamento, frontier models — molto tecnico
+
+  - url: https://www.latent.space/feed
+    name: Latent Space
+    # interviste e analisi approfondite — developer-focused
+
+  - url: https://lastweekin.ai/feed
+    name: Last Week in AI
+    # settimanale, rassegna completa di paper e notizie
+
+  - url: https://www.thealgorithmicbridge.com/feed
+    name: The Algorithmic Bridge (Alberto Romero)
+    # analisi critica dell'AI — meno hype, più sostanza
+
+  # - url: https://aibreakfast.beehiiv.com/feed
+  #   name: AI Breakfast
+  #   # quotidiano, molto rapido
 
 
-  # ── TECH NEWS ──────────────────────────────────────────────
+# ── TECH NEWS ─────────────────────────────────────────────────────────────────
 
   - url: https://techcrunch.com/category/artificial-intelligence/feed/
     name: TechCrunch AI
@@ -66,61 +139,120 @@ feeds:
   - url: https://www.wired.com/feed/tag/ai/latest/rss
     name: Wired AI
 
+  - url: https://thenextweb.com/neural/feed/
+    name: The Next Web — Neural (AI section)
 
-  # ── YOUTUBE ────────────────────────────────────────────────
-  # RSS nativo, niente API key — prende titolo + descrizione del video
-  # Per i transcript: youtube-transcript-api (Python, gratuito)
+  - url: https://venturebeat.com/category/ai/feed/
+    name: VentureBeat AI
 
-  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbmNph6atAoGfqLoCL_duAg
-    name: Andrej Karpathy
+  # - url: https://www.technologyreview.com/feed/
+  #   name: MIT Technology Review
+  #   # alcuni articoli sono dietro paywall
 
-  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew
-    name: Yannic Kilcher (paper spiegati)
 
-  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg
-    name: Two Minute Papers
+# ── COMMUNITY — Hacker News e Reddit ─────────────────────────────────────────
+# Volume alto — usa max_articles_per_feed basso (2-3)
 
-  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCNJ1Ymd5yFuUPtn21xtRbbw
-    name: AI Explained
+  - url: https://hnrss.org/newest?q=LLM+OR+AI+OR+GPT&points=150
+    name: Hacker News — AI (top stories)
+    # solo post con almeno 150 punti — filtra molto il rumore
+
+  - url: https://www.reddit.com/r/MachineLearning/.rss
+    name: Reddit r/MachineLearning
+    # paper, discussioni tecniche, ricerca
+
+  - url: https://www.reddit.com/r/LocalLLaMA/.rss
+    name: Reddit r/LocalLLaMA
+    # modelli open source, fine-tuning, self-hosting
+
+  # - url: https://www.reddit.com/r/artificial/.rss
+  #   name: Reddit r/artificial
+  #   # notizie generali AI — molto volume, qualità variabile
+
+
+# ── YOUTUBE — divulgazione e tool pratici ────────────────────────────────────
+# RSS nativo YouTube: niente API key, prende titolo + descrizione del video
+# Per trovare channel_id: https://commentpicker.com/youtube-channel-id.php
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA
+    name: Fireship
+    # aggiornamenti tech rapidi — AI, developer tools, nuovi modelli
 
   - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCjeHd5vRCORATU_-AiocTBg
     name: Matthew Berman
+    # review di tool AI, workflow pratici
 
-  # Per aggiungere altri canali YouTube:
-  # 1. Vai sul canale → tasto destro → Visualizza sorgente → cerca "channelId"
-  #    oppure usa: https://commentpicker.com/youtube-channel-id.php
-  # 2. Formato URL: https://www.youtube.com/feeds/videos.xml?channel_id=UCxxxxxxx
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCNJ1Ymd5yFuUPtn21xtRbbw
+    name: AI Explained
+    # analisi dei modelli e dei paper principali
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbmNph6atAoGfqLoCL_duAg
+    name: Andrej Karpathy
+    # ex OpenAI — contenuti profondi su LLM e neural networks
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCcIXc5mAbjTxFl1FnAmmZYg
+    name: DeepLearning.AI
+    # corsi e contenuti pratici di Andrew Ng
 
 
-  # ── PAPER E RICERCA (opzionale) ───────────────────────────
-  # Volume alto — usa max_articles_per_feed: 3 per questi
+# ── YOUTUBE — tecnico e ricerca ───────────────────────────────────────────────
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew
+    name: Yannic Kilcher
+    # paper spiegati in dettaglio — ML ricerca
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg
+    name: Two Minute Papers
+    # paper AI spiegati in 2 minuti
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAg
+    name: 3Blue1Brown
+    # matematica e AI — quando pubblica su ML è eccezionale
+
+  - url: https://www.youtube.com/feeds/videos.xml?channel_id=UCSHZKyawb77ixDdsGog4iWA
+    name: Lex Fridman
+    # interviste lunghe con i protagonisti dell'AI
+
+
+# ── PAPER E RICERCA ───────────────────────────────────────────────────────────
+# Volume molto alto — tieni max_articles_per_feed a 3
 
   # - url: https://arxiv.org/rss/cs.AI
-  #   name: ArXiv AI
+  #   name: ArXiv — AI generale
   #   max_articles_per_feed: 3
 
   # - url: https://arxiv.org/rss/cs.LG
-  #   name: ArXiv Machine Learning
+  #   name: ArXiv — Machine Learning
   #   max_articles_per_feed: 3
 
   # - url: https://arxiv.org/rss/cs.CL
-  #   name: ArXiv NLP / LLM
+  #   name: ArXiv — NLP e LLM
   #   max_articles_per_feed: 3
+
+  # - url: https://paperswithcode.com/latest/rss
+  #   name: Papers With Code
+  #   # paper con codice open source — solo i più rilevanti
+  #   max_articles_per_feed: 3
+
+
+# ── PRODOTTI E STARTUP ────────────────────────────────────────────────────────
+
+  - url: https://www.perplexity.ai/blog/rss.xml
+    name: Perplexity AI Blog
+
+  - url: https://replicate.com/blog/rss
+    name: Replicate Blog
+    # modelli open source via API
+
+  # - url: https://www.together.ai/blog/rss
+  #   name: Together AI Blog
+  #   # inferenza open source
 
 
 # ============================================================
 # FONTI MANUALI (aggiungi direttamente in NotebookLM)
 # ============================================================
-# Non automatizzare queste — non ne vale la pena:
-#
-# TWITTER/X   → API ufficiale: $100/mese. Quando vedi un thread
-#               interessante, copia l'URL e aggiungilo a mano.
-#
-# LINKEDIN    → No API pubblica. Stesso approccio: URL → manuale.
-#
-# PDF/PAPER   → Carica il file direttamente in NotebookLM,
-#               oppure incolla l'URL (es. link ArXiv pubblico).
-#
-# REGOLA:     Automatizza le fonti regolari (newsletter, blog, YouTube).
-#             Aggiungi a mano quello che trovi per caso.
-#             10 secondi per aggiungere un URL > pagare API.
+# TWITTER/X   → API: $100/mese. Copia l'URL del thread → incolla in NotebookLM.
+# LINKEDIN    → No API pubblica. Stesso approccio manuale.
+# PDF / PAPER → Carica il file direttamente in NotebookLM (accetta upload).
+# NEWSLETTER SENZA RSS → Usa kill-the-newsletter.com per convertirle in RSS.
