@@ -129,13 +129,25 @@ def add_to_notebooklm(articles: list, notebook: str, dry_run: bool = False):
     )
 
     print("\nChiamando Claude...")
-    result = subprocess.run(
-        ["claude", "-p", prompt],
-        capture_output=True,
-        text=True,
-        timeout=300,
-        shell=True,
-    )
+
+    # Su Windows, cmd.exe non gestisce prompt multi-riga con caratteri speciali.
+    # Scriviamo il prompt su un file temporaneo e lo passiamo via PowerShell.
+    import tempfile, os
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
+        f.write(prompt)
+        tmp_path = f.name
+
+    try:
+        ps_cmd = f'$p = Get-Content -Raw -Path "{tmp_path}"; & claude -p $p'
+        result = subprocess.run(
+            ["powershell", "-NonInteractive", "-Command", ps_cmd],
+            capture_output=True,
+            text=True,
+            timeout=300,
+            encoding="utf-8",
+        )
+    finally:
+        os.unlink(tmp_path)
 
     if result.returncode != 0:
         print(f"ERRORE Claude:\n{result.stderr}")
